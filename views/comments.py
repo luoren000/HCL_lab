@@ -5,7 +5,12 @@ import models
 import json
 
 class CommentListEndpoint(Resource):
-    
+    def queryset_to_serialized_list(self, queryset):
+        serialized_list = [
+            item.to_dict() for item in queryset
+        ]
+        return serialized_list
+
     def get(self):
         # Goal: list all of the comments that are currently in my database:
         keyword = request.args.get('keyword')

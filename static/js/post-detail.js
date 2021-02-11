@@ -1,12 +1,13 @@
 
 let activePost;
 
+
 // gets post from the server:
 const getPost = () => {
     // get post id from url address:
+
     const url = window.location.href;
     id = url.substring(url.lastIndexOf('#') + 1);
-
     // fetch post:
     fetch('/api/posts/' + id + '/')
         .then(response => response.json())
@@ -15,6 +16,104 @@ const getPost = () => {
             activePost = data;
             renderPost();
         });
+};
+
+const getComment = () => {
+    fetch('/api/comments')
+        .then(response => response.json())
+        .then(displayComments);
+};
+
+const displayComments = (data) => {
+    console.log('hahahahaha', data);
+
+    const entries = [];
+    for (const post of data) {
+        if (post.post_id == id){
+            console.log(post.post_id);
+            entries.push(renderComments(post));
+        }
+    }
+    document.querySelector('.comments').innerHTML = entries.join('\n');
+};
+
+const renderComments = (post) => {
+    // formatting the date:
+    const paragraphs = '<p>' + post.comment.split('\n').join('</p><p>') + '</p>';
+    const template = `
+    <div class = 'CommentID'>
+            <p><strong>${post.author+':'}</strong></p>
+            <div class = 'content' style="text-indent:2em;">${paragraphs}</div>
+            <i class = 'fa fa-trash' id = 'idid' aria-hidden = "true" type="button" onclick = deleteComments('${post.id}')></i>
+    </div>
+    `;
+    return template;
+};
+
+const addComments = () => {
+    const template = `
+        <h1>Add a comment</h1>
+        <div class="input-section">
+              <input type="text" name="author" id="autho" placeholder="Name">
+        </div>
+        <div class="input-section">
+              <textarea name="content" id="comment" placeholder="Comments..."></textarea>
+        </div>
+              <button class="btn btn-main" id="sav" type="submit">Submit</button>
+              <a class="btn" href="/post/#${id}">Cancel</a>
+       
+    `;
+    document.querySelector('.add-comment').innerHTML = template;
+    document.querySelector('#sav').onclick = createComments;
+    //document.querySelector('#cance').onclick = renderPost;
+};
+
+const createComments = (ev) => {
+    const data = {
+        comment: document.querySelector('#comment').value,
+        author: document.querySelector('#autho').value,
+        post: id
+    };
+    if (data.author != '' && data.comment != ''){
+        console.log(data);
+    fetch('/api/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {initializePage()}
+);
+    }
+    else{
+        initializePage()
+    }
+
+
+
+    // this line overrides the default form functionality:
+};
+
+const deleteComments = (comment_id) => {
+    const doIt = confirm('Are you sure you want to delete this comment?');
+    if (!doIt) {
+        return;
+    }
+    fetch('/api/comments/' + comment_id + '/', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        // navigate back to main page:
+        initializePage()
+    });
+    ev.preventDefault()
 };
 
 // updates the post:
@@ -138,7 +237,11 @@ const showConfirmation = () => {
 const initializePage = () => {
     // get the post from the server:
     getPost();
+
+    getComment();
+    addComments();
     // add button event handler (right-hand corner:
+    //document.querySelector('#sav').onclick = createComments;
     document.querySelector('#edit-button').onclick = renderForm;
     document.querySelector('#delete-button').onclick = deletePost;
 };
